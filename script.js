@@ -17,14 +17,16 @@ const colors = [
 ];
 
 function setup() {
-   
     clear();
     
         if (is3D) {
-            createCanvas(windowWidth, windowHeight, WEBGL);
+            canvas = createCanvas(windowWidth, windowHeight, WEBGL);
         } else {
-            createCanvas(windowWidth, windowHeight);
+            canvas = createCanvas(windowWidth, windowHeight);
         }
+
+        canvas.parent("canvas-container")
+
         borderWidth = windowWidth;
         borderHeight = windowHeight;
 
