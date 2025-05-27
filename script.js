@@ -72,9 +72,9 @@ function initBoxes1(cols, rows) {
                 y: y,
                 s: 40,
                 c: {
-                    r: 225,
-                    g: 225,
-                    b: 225
+                    r: 255,
+                    g: 255,
+                    b: 255
                 },
             }
             lines.push(box);
