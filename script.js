@@ -1,5 +1,6 @@
 let borderWidth = 0
 let borderHeight = 0
+let is3D = false
 
 const colorfulCols = 3;
 const colorfulRows = 3;
@@ -16,18 +17,54 @@ const colors = [
 ];
 
 function setup() {
-    createCanvas(windowWidth, windowHeight)
-    borderWidth = windowWidth
-    borderHeight = windowHeight
-    initBoxes1(colorfulCols, colorfulRows)
-    initBoxes2(colorfulCols, colorfulRows)
-    initBoxes3(colorfulCols, colorfulRows)
-    initBoxes4(colorfulCols, colorfulRows)
-    initBoxes5(colorfulCols, colorfulRows)
-    initBoxes6(colorfulCols, colorfulRows)
-}
+   
+    clear();
+    
+        if (is3D) {
+            createCanvas(windowWidth, windowHeight, WEBGL);
+        } else {
+            createCanvas(windowWidth, windowHeight);
+        }
+        borderWidth = windowWidth;
+        borderHeight = windowHeight;
+
+        colorfulBoxes.length = 0
+
+        initBoxes1(colorfulCols, colorfulRows);
+        initBoxes2(colorfulCols, colorfulRows);
+        initBoxes3(colorfulCols, colorfulRows);
+        initBoxes4(colorfulCols, colorfulRows);
+        initBoxes5(colorfulCols, colorfulRows);
+        initBoxes6(colorfulCols, colorfulRows);
+    }
+    
+    function toggle3D() {
+        is3D = !is3D;
+        setup(); 
+    }
+    
+    function drawBoxes3D() {
+        for (let rows of colorfulBoxes) {
+            for (let box of rows) {
+                push();
+                translate(box.x - borderWidth / 2, box.y - borderHeight / 2, 0);
+                fill(box.c.r, box.c.g, box.c.b);
+                box.s = 40;
+                boxDepth = 20;
+                boxSize = box.s;
+                boxShape(boxSize, boxDepth);
+                pop();
+            }
+        }
+    }
+    
+   
+    function boxShape(w, d) {
+        box(w, w, d); 
+    }
 
 function mouseClicked() {
+    if (is3D) return;
     for (const rows of colorfulBoxes)
         for (const box of rows)
             if (mouseX >= box.x && 
@@ -43,7 +80,14 @@ function mouseClicked() {
 
 function draw() {
     background("#eeeeee")
-    drawColorfulBoxes()
+    
+    if (is3D) {
+        rotateX(frameCount * 0.01);
+        rotateY(frameCount * 0.01);
+        drawBoxes3D();
+    } else {
+        drawColorfulBoxes();
+    }
 }
 
 function drawColorfulBoxes() {
