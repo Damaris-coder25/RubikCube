@@ -1,262 +1,141 @@
-let borderWidth = 0
-let borderHeight = 0
-let is3D = false
+let colorfulBoxes = [];
+const cubeSize = 40;
+const spacing = 5;
+const cubeCount = 3; // 3x3x3 cubes
 
-const colorfulCols = 3;
-const colorfulRows = 3;
+const faceColors = {
+  U: { r: 255, g: 255, b: 255 },   // White (Up)
+  D: { r: 255, g: 255, b: 0 },     // Yellow (Down)
+  F: { r: 255, g: 0, b: 0 },       // Red (Front)
+  B: { r: 0, g: 0, b: 255 },       // Blue (Back)
+  L: { r: 255, g: 165, b: 0 },     // Orange (Left)
+  R: { r: 0, g: 255, b: 0 }        // Green (Right)
+};
 
-const colorfulBoxes = [];
-
-const colors = [
-    { r: 255, g: 255, b: 255 }, // white
-    { r: 0, g: 0, b: 255 },     // blue
-    { r: 255, g: 0, b: 0 },     // red
-    { r: 0, g: 255, b: 0 },     // green
-    { r: 255, g: 255, b: 0 },   // yellow
-    { r: 255, g: 165, b: 0 }    // orange
-];
+let rotX = 0;
+let rotY = 0;
 
 function setup() {
-    clear();
-    
-        if (is3D) {
-            canvas = createCanvas(windowWidth, windowHeight, WEBGL);
-        } else {
-            canvas = createCanvas(windowWidth, windowHeight);
-        }
+  createCanvas(1350, 400, WEBGL);
+  noStroke();
 
-        canvas.parent("canvas-container")
-
-        borderWidth = windowWidth;
-        borderHeight = windowHeight;
-
-        colorfulBoxes.length = 0
-
-        initBoxes1(colorfulCols, colorfulRows);
-        initBoxes2(colorfulCols, colorfulRows);
-        initBoxes3(colorfulCols, colorfulRows);
-        initBoxes4(colorfulCols, colorfulRows);
-        initBoxes5(colorfulCols, colorfulRows);
-        initBoxes6(colorfulCols, colorfulRows);
+  for (let x = 0; x < cubeCount; x++) {
+    for (let y = 0; y < cubeCount; y++) {
+      for (let z = 0; z < cubeCount; z++) {
+        colorfulBoxes.push({
+          pos: createVector(
+            (x - 1) * (cubeSize + spacing),
+            (y - 1) * (cubeSize + spacing),
+            (z - 1) * (cubeSize + spacing)
+          ),
+          faces: {
+            U: y === 0 ? faceColors.U : null,
+            D: y === 2 ? faceColors.D : null,
+            F: z === 2 ? faceColors.F : null,
+            B: z === 0 ? faceColors.B : null,
+            L: x === 0 ? faceColors.L : null,
+            R: x === 2 ? faceColors.R : null,
+          }
+        });
+      }
     }
-    
-    function toggle3D() {
-        is3D = !is3D;
-        setup(); 
-    }
-    
-    function drawBoxes3D() {
-        for (let rows of colorfulBoxes) {
-            for (let box of rows) {
-                push();
-                translate(box.x - borderWidth / 2, box.y - borderHeight / 2, 0);
-                fill(box.c.r, box.c.g, box.c.b);
-                box.s = 40;
-                boxDepth = 20;
-                boxSize = box.s;
-                boxShape(boxSize, boxDepth);
-                pop();
-            }
-        }
-    }
-    
-   
-    function boxShape(w, d) {
-        box(w, w, d); 
-    }
+  }
 
-function mouseClicked() {
-    if (is3D) return;
-    for (const rows of colorfulBoxes)
-        for (const box of rows)
-            if (mouseX >= box.x && 
-                mouseX <= box.x + box.s &&
-                mouseY >= box.y && 
-                mouseY <= box.y + box.s) {
-                    const currentIndex = colors.indexOf(box.c);
-                    const nextIndex = (currentIndex + 1) % colors.length;
-                    box.c = colors[nextIndex];
-            }
-
+  rotY = PI / 4;
+  rotX = -PI / 6;
 }
 
 function draw() {
-    background("#eeeeee")
-    
-    if (is3D) {
-        rotateX(frameCount * 0.01);
-        rotateY(frameCount * 0.01);
-        drawBoxes3D();
-    } else {
-        drawColorfulBoxes();
-    }
+  background(240);
+
+  // Zoom in (increase size)
+  scale(1.2); // 1.5 times bigger, adjust as needed
+  rotateX(rotX);
+  rotateY(rotY);
+
+  for (const cube of colorfulBoxes) {
+    push();
+    translate(cube.pos.x, cube.pos.y, cube.pos.z);
+    drawFlatCube(cube.faces);
+    pop();
+  }
 }
 
-function drawColorfulBoxes() {
-    for (let rows of colorfulBoxes) {
-        for (let box of rows) {
-                drawBox(box)
-        }
-    }
+
+function drawFlatCube(faces) {
+  // Draw 6 faces as colored planes with fill(), no lighting
+
+  // Draw cube faces one by one
+
+  // UP
+  push();
+  translate(0, -cubeSize / 2, 0);
+  rotateX(-HALF_PI);
+  fillFace(faces.U);
+  plane(cubeSize, cubeSize);
+  pop();
+
+  // DOWN
+  push();
+  translate(0, cubeSize / 2, 0);
+  rotateX(HALF_PI);
+  fillFace(faces.D);
+  plane(cubeSize, cubeSize);
+  pop();
+
+  // FRONT
+  push();
+  translate(0, 0, cubeSize / 2);
+  fillFace(faces.F);
+  plane(cubeSize, cubeSize);
+  pop();
+
+  // BACK
+  push();
+  translate(0, 0, -cubeSize / 2);
+  rotateY(PI);
+  fillFace(faces.B);
+  plane(cubeSize, cubeSize);
+  pop();
+
+  // LEFT
+  push();
+  translate(-cubeSize / 2, 0, 0);
+  rotateY(-HALF_PI);
+  fillFace(faces.L);
+  plane(cubeSize, cubeSize);
+  pop();
+
+  // RIGHT
+  push();
+  translate(cubeSize / 2, 0, 0);
+  rotateY(HALF_PI);
+  fillFace(faces.R);
+  plane(cubeSize, cubeSize);
+  pop();
 }
 
-function drawBox(obj) {
-    fill(obj.c.r, obj.c.g, obj.c.b)
-    square(obj.x, obj.y, obj.s)
+function fillFace(color) {
+  if (color) {
+    fill(color.r, color.g, color.b);
+  } else {
+    fill(50); // Default grey for no color faces
+  }
 }
 
-//white
-function initBoxes1(cols, rows) {
-    let x = 180
-    let y = 15
-    for (let i = 0; i < rows; i++) {
-        const lines = []
-        colorfulBoxes.push(lines)
-        for (let j = 0; j < cols; j++) {
-            const box = {
-                x: x,
-                y: y,
-                s: 40,
-                c: {
-                    r: 255,
-                    g: 255,
-                    b: 255
-                },
-            }
-            lines.push(box);
-            x += 50
-        }
-        x = 180
-        y += 50
-    }
+// Optional: rotation functions (if you want to add controls)
+function rotateLeft() {
+  rotY -= HALF_PI;
 }
 
-//yellow
-function initBoxes2(cols, rows) {
-    let x = 180
-    let y = 325
-    for (let i = 0; i < rows; i++) {
-        const lines = []
-        colorfulBoxes.push(lines)
-        for (let j = 0; j < cols; j++) {
-            const box = {
-                x: x,
-                y: y,
-                s: 40,
-                c: {
-                    r: 255,
-                    g: 255,
-                    b: 0
-                },
-            }
-            lines.push(box);
-            x += 50
-        }
-        x = 180
-        y += 50
-    }
+function rotateRight() {
+  rotY += HALF_PI;
 }
 
-//orange
-function initBoxes3(cols, rows) {
-    let x = 25
-    let y = 170
-    for (let i = 0; i < rows; i++) {
-        const lines = []
-        colorfulBoxes.push(lines)
-        for (let j = 0; j < cols; j++) {
-            const box = {
-                x: x,
-                y: y,
-                s: 40,
-                c: {
-                    r: 255,
-                    g: 165,
-                    b: 0
-                },
-            }
-            lines.push(box);
-            x += 50
-        }
-        x = 25
-        y += 50
-    }
+function rotateUp() {
+  rotX -= HALF_PI;
 }
 
-//green
-function initBoxes4(cols, rows) {
-    let x = 180
-    let y = 170
-    for (let i = 0; i < rows; i++) {
-        const lines = []
-        colorfulBoxes.push(lines)
-        for (let j = 0; j < cols; j++) {
-            const box = {
-                x: x,
-                y: y,
-                s: 40,
-                c: {
-                    r: 0,
-                    g: 225,
-                    b: 0
-                },
-            }
-            lines.push(box);
-            x += 50
-        }
-        x = 180
-        y += 50
-    }
-}
-
-//red
-function initBoxes5(cols, rows) {
-    let x = 340
-    let y = 170
-    for (let i = 0; i < rows; i++) {
-        const lines = []
-        colorfulBoxes.push(lines)
-        for (let j = 0; j < cols; j++) {
-            const box = {
-                x: x,
-                y: y,
-                s: 40,
-                c: {
-                    r: 255,
-                    g: 0,
-                    b: 0
-                },
-            }
-            lines.push(box);
-            x += 50
-        }
-        x = 340
-        y += 50
-    }
-}
-
-//blue
-function initBoxes6(cols, rows) {
-    let x = 500
-    let y = 170
-    for (let i = 0; i < rows; i++) {
-        const lines = []
-        colorfulBoxes.push(lines)
-        for (let j = 0; j < cols; j++) {
-            const box = {
-                x: x,
-                y: y,
-                s: 40,
-                c: {
-                    r: 0,
-                    g: 0,
-                    b: 225
-                },
-            }
-            lines.push(box);
-            x += 50
-        }
-        x = 500
-        y += 50
-    }
+function rotateDown() {
+  rotX += HALF_PI;
 }
