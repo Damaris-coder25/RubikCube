@@ -1,141 +1,132 @@
-let colorfulBoxes = [];
-const cubeSize = 40;
-const spacing = 5;
-const cubeCount = 3; // 3x3x3 cubes
+let borderWidth = 0
+let borderHeight = 0
 
-const faceColors = {
-  U: { r: 255, g: 255, b: 255 },   // White (Up)
-  D: { r: 255, g: 255, b: 0 },     // Yellow (Down)
-  F: { r: 255, g: 0, b: 0 },       // Red (Front)
-  B: { r: 0, g: 0, b: 255 },       // Blue (Back)
-  L: { r: 255, g: 165, b: 0 },     // Orange (Left)
-  R: { r: 0, g: 255, b: 0 }        // Green (Right)
-};
+const colorfulCols = 3;
+const colorfulRows = 3;
 
-let rotX = 0;
-let rotY = 0;
+const colorfulBoxes = [];
+
+const colors = [
+    { r: 255, g: 255, b: 255 }, // white
+    { r: 0, g: 0, b: 255 },     // blue
+    { r: 255, g: 0, b: 0 },     // red
+    { r: 0, g: 255, b: 0 },     // green
+    { r: 255, g: 255, b: 0 },   // yellow
+    { r: 255, g: 165, b: 0 }    // orange
+];
 
 function setup() {
-  createCanvas(1350, 400, WEBGL);
-  noStroke();
+    createCanvas(windowWidth, windowHeight)
 
-  for (let x = 0; x < cubeCount; x++) {
-    for (let y = 0; y < cubeCount; y++) {
-      for (let z = 0; z < cubeCount; z++) {
-        colorfulBoxes.push({
-          pos: createVector(
-            (x - 1) * (cubeSize + spacing),
-            (y - 1) * (cubeSize + spacing),
-            (z - 1) * (cubeSize + spacing)
-          ),
-          faces: {
-            U: y === 0 ? faceColors.U : null,
-            D: y === 2 ? faceColors.D : null,
-            F: z === 2 ? faceColors.F : null,
-            B: z === 0 ? faceColors.B : null,
-            L: x === 0 ? faceColors.L : null,
-            R: x === 2 ? faceColors.R : null,
-          }
-        });
-      }
-    }
-  }
+    borderWidth = windowWidth
+    borderHeight = windowHeight
 
-  rotY = PI / 4;
-  rotX = -PI / 6;
+    colorfulBoxes.length = 0;
+
+    initBoxes(3, 3, 180, 15, 0);   // white
+    initBoxes(3, 3, 180, 325, 4);  // yellow
+    initBoxes(3, 3, 25, 170, 5);   // orange
+    initBoxes(3, 3, 180, 170, 3);  // green
+    initBoxes(3, 3, 340, 170, 2);  // red
+    initBoxes(3, 3, 500, 170, 1);  // blue
+}
+
+function mouseClicked() {
+    for (const rows of colorfulBoxes)
+        for (const row of rows)
+            for (const box of row)
+                if (mouseX >= box.x && 
+                    mouseX <= box.x + box.s &&
+                    mouseY >= box.y && 
+                    mouseY <= box.y + box.s) {
+                        box.colorIndex = (box.colorIndex + 1) % colors.length;
+                        box.c = colors[box.colorIndex];
+                }
 }
 
 function draw() {
-  background(240);
+    background("#eeeeee")
+    drawColorfulBoxes()
+}
 
-  // Zoom in (increase size)
-  scale(1.2); // 1.5 times bigger, adjust as needed
-  rotateX(rotX);
-  rotateY(rotY);
+function drawColorfulBoxes() {
+    for (const face of colorfulBoxes) {
+        for (const row of face) {
+            for (const box of row) {
+                drawBox(box);
+            }
+        }
+    }
+}
 
-  for (const cube of colorfulBoxes) {
-    push();
-    translate(cube.pos.x, cube.pos.y, cube.pos.z);
-    drawFlatCube(cube.faces);
-    pop();
-  }
+function drawBox(obj) {
+    fill(obj.c.r, obj.c.g, obj.c.b)
+    square(obj.x, obj.y, obj.s)
+}
+
+function initBoxes(cols, rows, startX, startY, colorIndex) {
+    const face = [];
+    for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < cols; j++) {
+            const box = {
+                x: startX + j * 50,
+                y: startY + i * 50,
+                s: 40,
+                c: colors[colorIndex],
+                colorIndex: colorIndex,
+            };
+            row.push(box);
+        }
+        face.push(row);
+    }
+    colorfulBoxes.push(face);
+}
+
+function scramble(){
+    const colorPool = [];
+    let totalBoxes = 0;
+
+    // Calculăm câte boxuri vom schimba (excludem centrul din fiecare matrice)
+    for (let f = 0; f < colorfulBoxes.length; f++) {
+        for (let i = 0; i < colorfulRows; i++) {
+            for (let j = 0; j < colorfulCols; j++) {
+                if (i === 1 && j === 1) continue; // sărim peste centrul fiecărei matrice
+                totalBoxes++;
+            }
+        }
+    }
+
+    // Creăm colorPool doar pentru boxurile ce vor fi schimbate
+    for (let i = 0; i < colors.length; i++) {
+        for (let j = 0; j < totalBoxes / colors.length; j++) {
+            colorPool.push(i);
+        }
+    }
+
+    // Amestecăm culorile
+    for (let i = colorPool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [colorPool[i], colorPool[j]] = [colorPool[j], colorPool[i]];
+    }
+
+    // Aplicăm culorile
+    let index = 0;
+    for (const face of colorfulBoxes) {
+        for (let i = 0; i < colorfulRows; i++) {
+            for (let j = 0; j < colorfulCols; j++) {
+                if (i === 1 && j === 1) continue; // nu schimbăm boxul central
+                const box = face[i][j];
+                const colorIndex = colorPool[index++];
+                box.c = colors[colorIndex];
+                box.colorIndex = colorIndex;
+            }
+        }
+    }
 }
 
 
-function drawFlatCube(faces) {
-  // Draw 6 faces as colored planes with fill(), no lighting
-
-  // Draw cube faces one by one
-
-  // UP
-  push();
-  translate(0, -cubeSize / 2, 0);
-  rotateX(-HALF_PI);
-  fillFace(faces.U);
-  plane(cubeSize, cubeSize);
-  pop();
-
-  // DOWN
-  push();
-  translate(0, cubeSize / 2, 0);
-  rotateX(HALF_PI);
-  fillFace(faces.D);
-  plane(cubeSize, cubeSize);
-  pop();
-
-  // FRONT
-  push();
-  translate(0, 0, cubeSize / 2);
-  fillFace(faces.F);
-  plane(cubeSize, cubeSize);
-  pop();
-
-  // BACK
-  push();
-  translate(0, 0, -cubeSize / 2);
-  rotateY(PI);
-  fillFace(faces.B);
-  plane(cubeSize, cubeSize);
-  pop();
-
-  // LEFT
-  push();
-  translate(-cubeSize / 2, 0, 0);
-  rotateY(-HALF_PI);
-  fillFace(faces.L);
-  plane(cubeSize, cubeSize);
-  pop();
-
-  // RIGHT
-  push();
-  translate(cubeSize / 2, 0, 0);
-  rotateY(HALF_PI);
-  fillFace(faces.R);
-  plane(cubeSize, cubeSize);
-  pop();
+function toggle3D(){
+     window.location.href = "index3D.html";
 }
 
-function fillFace(color) {
-  if (color) {
-    fill(color.r, color.g, color.b);
-  } else {
-    fill(50); // Default grey for no color faces
-  }
-}
-
-// Optional: rotation functions (if you want to add controls)
-function rotateLeft() {
-  rotY -= HALF_PI;
-}
-
-function rotateRight() {
-  rotY += HALF_PI;
-}
-
-function rotateUp() {
-  rotX -= HALF_PI;
-}
-
-function rotateDown() {
-  rotX += HALF_PI;
-}
